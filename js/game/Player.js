@@ -8,13 +8,14 @@ Player.prototype.create = function ( x, y )
 	this.speed = 350;
 
 	//this.sprite = group.create( x, y, 'cactus', 0 );
-	this.sprite = Kid.game.add.sprite( x, y, 'cactus', 0 );
+	this.sprite = Kid.game.add.sprite( x, y, 'mario', 0 );
 	this.sprite.owner = this;
 	Kid.game.physics.arcade.enable( this.sprite, Phaser.Physics.ARCADE );
 	this.sprite.anchor.set( 0.5 );
-	this.sprite.scale.set( 0.1 );
+	this.sprite.scale.set( 3 );
+	this.sprite.texture.baseTexture.scaleMode = PIXI.scaleModes.NEAREST;
 
-	//this.setupAnimation();
+	this.setupAnimation();
 
 	this.locked = false;
 	this.lockedTo = null;
@@ -34,57 +35,20 @@ Player.prototype.create = function ( x, y )
 
 Player.prototype.setupAnimation = function ()
 {
-	var len = 6;
-	var idle = [0,0,0,0,0,0,0,0,0,0,0,0,0,1];
-	var walk = [3,4,5,2];
-	var hurt = [1];
-	this.sprite.animations.add( 'idle_right', idle, 8, true );
-	this.sprite.animations.add( 'walk_right', walk, 10, true );
-	this.sprite.animations.add( 'hurt_right', hurt, 8, false );
-	idle = idle.map( n => n + len );
-	walk = walk.map( n => n + len );
-	hurt = hurt.map( n => n + len );
-	this.sprite.animations.add( 'idle_down', idle, 8, true );
-	this.sprite.animations.add( 'walk_down', walk, 10, true );
-	this.sprite.animations.add( 'hurt_down', hurt, 8, false );
-	idle = idle.map( n => n + len );
-	walk = walk.map( n => n + len );
-	hurt = hurt.map( n => n + len );
-	this.sprite.animations.add( 'idle_left', idle, 8, true );
-	this.sprite.animations.add( 'walk_left', walk, 10, true );
-	this.sprite.animations.add( 'hurt_left', hurt, 8, false );
-	idle = idle.map( n => n + len );
-	walk = walk.map( n => n + len );
-	hurt = hurt.map( n => n + len );
-	this.sprite.animations.add( 'idle_up', idle, 8, true );
-	this.sprite.animations.add( 'walk_up', walk, 10, true );
-	this.sprite.animations.add( 'hurt_up', hurt, 8, false );
+	this.sprite.animations.add( 'duck', [0], 1, true );
+	this.sprite.animations.add( 'idle', [1], 1, true );
+	this.sprite.animations.add( 'skid', [6], 1, true );
+	this.sprite.animations.add( 'walk', [3,5,4], 12, true );
+	this.sprite.animations.add( 'jump', [6], 1, true );
 
-	this.state = 'idle';
-	this.direction = 'down';
-	this.sprite.animations.play( 'idle_down' );
-
-	this.swing.animations.add( 'attack', [1,1,1,1,2,3], 60, false );
-
-	this.stepCooldown = 0;
+	this.setAnimation( 'idle' );
 };
 
-Player.prototype.setAnimation = function ( newState, newDirection )
+Player.prototype.setAnimation = function ( newState )
 {
-	if ( this.damageState == 'dead' )
-		return;
-
-	var name = null;
-	if ( this.state != newState || this.direction != newDirection )
+	if ( this.state != newState )
 	{
-		name = '{0}_{1}'.format( newState, newDirection );
-		this.state = newState;
-		this.direction = newDirection;
-	}
-
-	if ( name )
-	{
-		this.sprite.animations.play( name );
+		this.sprite.animations.play( newState );
 	}
 };
 
@@ -141,14 +105,21 @@ Player.prototype.update = function ()
 	var onFloor = this.sprite.body.touching.down || this.sprite.body.blocked.down || this.locked;
 
 	var p = new Phaser.Point( 0, 0 );
-	//if ( this.keys.up.isDown || this.keys.w.isDown )
-	//	p.y -= 1;
-	//if ( this.keys.down.isDown || this.keys.s.isDown )
-	//	p.y += 1;
-	if ( this.keys.left.isDown || this.keys.a.isDown )
+	var left = this.keys.left.isDown || this.keys.a.isDown;
+	var right = this.keys.right.isDown || this.keys.d.isDown;
+	var down = this.keys.down.isDown || this.keys.s.isDown;
+	if ( left )
+	{
 		p.x -= 1;
-	if ( this.keys.right.isDown || this.keys.d.isDown )
+	}
+	if ( right )
+	{
 		p.x += 1;
+	}
+	if ( down && onFloor )
+	{
+		p.x = 0;
+	}
 
 	p.setMagnitude( this.speed );
 	if ( onFloor )
@@ -160,32 +131,8 @@ Player.prototype.update = function ()
 		this.sprite.body.velocity.x += ( p.x - this.sprite.body.velocity.x ) / 20;
 	}
 
-	/*
-	if ( p.getMagnitude() > 0 )
-	{
-		var direction;
-		if ( Math.abs( p.x ) >= Math.abs( p.y ) )
-			direction = p.x > 0 ? 'right' : 'left';
-		else
-			direction = p.y > 0 ? 'down' : 'up';
-		this.setAnimation( 'walk', direction );
 
-		this.trailCooldown -= 1;
-		if ( this.trailCooldown < 0 )
-		{
-			this.trailCooldown = 10;
-			this.trail.x = this.sprite.body.center.x - p.x/this.speed*4;
-			this.trail.y = this.sprite.body.center.y - p.y/this.speed*2 + 4;
-			this.trail.start( true, 4000, null, 1 );
-		}
-	}
-	else
-	{
-		this.setAnimation( 'idle', this.direction );
-	}
-	*/
-
-	if ( this.keys.space.justDown || this.keys.up.justDown )
+	if ( ( this.keys.space.justDown || this.keys.up.justDown ) )
 	{
 		if ( onFloor && Kid.game.time.now > this.jumpTimer )
 		{
@@ -194,7 +141,7 @@ Player.prototype.update = function ()
 				this.cancelLock();
 			}
 
-			if ( this.keys.down.isDown )
+			if ( down && !left && !right )
 			{
 				this.willDrop = true;
 			}
@@ -217,6 +164,26 @@ Player.prototype.update = function ()
 	else
 	{
 		this.sprite.body.gravity.y = 1500;
+	}
+
+
+	var v = this.sprite.body.velocity;
+	if ( !onFloor )
+	{
+		this.setAnimation( 'jump' );
+	}
+	else if ( down && !left && !right )
+	{
+		this.setAnimation( 'duck' );
+	}
+	else if ( Math.abs( v.x ) > 20 )
+	{
+		this.sprite.scale.x = v.x > 0 ? 3 : -3;
+		this.setAnimation( 'walk' );
+	}
+	else
+	{
+		this.setAnimation( 'idle' );
 	}
 };
 

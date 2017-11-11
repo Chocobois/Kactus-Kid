@@ -17,7 +17,8 @@ Kid.Preload.prototype = {
 
 		/* Sprites */
 
-		//this.load.spritesheet( 'name', 'assets/sprites/name.png', 32, 32 );
+		this.load.spritesheet( 'mario', 'assets/sprites/mario.png', 16, 32 );
+
 		this.load.image( 'cactus', 'assets/sprites/cactus.png' );
 		this.load.image( 'balloon', 'assets/sprites/balloon.png' );
 		this.load.image( 'balloons', 'assets/sprites/cute-balloons.png' );

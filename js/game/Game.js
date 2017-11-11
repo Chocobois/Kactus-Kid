@@ -9,7 +9,7 @@ Kid.Game = function()
 
 Kid.Game.prototype.create = function ()
 {
-	Kid.game.physics.arcade.gravity.y = 1000;
+	Kid.game.physics.arcade.gravity.y = 1300;
 
 	//this.entities = Kid.game.add.group();
 
