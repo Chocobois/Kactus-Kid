@@ -2,7 +2,7 @@ var Kid = Kid || {};
 
 var SCREEN_WIDTH = 1000;
 var SCREEN_HEIGHT = 600;
-Kid.game = new Phaser.Game( SCREEN_WIDTH, SCREEN_HEIGHT );
+Kid.game = new Phaser.Game( SCREEN_WIDTH, SCREEN_HEIGHT, Phaser.CANVAS );
 
 Kid.game.state.add( 'Boot', Kid.Boot );
 Kid.game.state.add( 'Preload', Kid.Preload );

@@ -9,11 +9,18 @@ Player.prototype.create = function ( x, y )
 
 	//this.sprite = group.create( x, y, 'cactus', 0 );
 	this.sprite = Kid.game.add.sprite( x, y, 'cactus', 0 );
+	this.sprite.owner = this;
 	Kid.game.physics.arcade.enable( this.sprite, Phaser.Physics.ARCADE );
 	this.sprite.anchor.set( 0.5 );
 	this.sprite.scale.set( 0.1 );
 
 	//this.setupAnimation();
+
+	this.locked = false;
+	this.lockedTo = null;
+	this.wasLocked = false;
+	this.willJump = false;
+	this.willDrop = false;
 
 	this.keys = Kid.game.input.keyboard.createCursorKeys();
 	this.keys.w = Kid.game.input.keyboard.addKey( Phaser.Keyboard.W );
@@ -81,27 +88,57 @@ Player.prototype.setAnimation = function ( newState, newDirection )
 	}
 };
 
-Player.prototype.update = function ()
+Player.prototype.preRender = function ()
 {
-	var onFloor = this.sprite.body.touching.down || this.sprite.body.onFloor();
-
-	if ( this.keys.space.justDown || this.keys.up.justDown )
+	if (this.locked || this.wasLocked)
 	{
-		if ( onFloor && Kid.game.time.now > this.jumpTimer )
+		this.sprite.x += this.lockedTo.deltaX;
+		this.sprite.y = this.lockedTo.y - 40;
+
+		if (this.sprite.body.velocity.x !== 0)
 		{
-			this.sprite.body.velocity.y = -650;
-			this.jumpTimer = Kid.game.time.now + 10;
+			this.sprite.body.velocity.y = 0;
 		}
 	}
 
-	if ( ( this.keys.space.isDown || this.keys.up.isDown ) && this.sprite.body.velocity.y < 0 )
+	if (this.willJump)
 	{
-		this.sprite.body.gravity.y = 0;
+		this.willJump = false;
+
+		if (this.lockedTo && this.lockedTo.deltaY < 0 && this.wasLocked)
+		{
+			//  If the platform is moving up we add its velocity to the players jump
+			this.sprite.body.velocity.y = -650 + (this.lockedTo.deltaY * 10);
+		}
+		else
+		{
+			this.sprite.body.velocity.y = -650;
+		}
+
+		this.jumpTimer = Kid.game.time.now + 10;
 	}
-	else
+
+	if (this.willDrop && this.wasLocked)
 	{
-		this.sprite.body.gravity.y = 1500;
+		this.willDrop = false;
+
+		this.sprite.body.velocity.y = 650/4;
+
+		this.jumpTimer = Kid.game.time.now + 10;
+		this.lockedTo.owner.lockTimer = Kid.game.time.now + 100;
 	}
+
+	if (this.wasLocked)
+	{
+		this.wasLocked = false;
+		this.lockedTo.owner.playerLocked = false;
+		this.lockedTo = null;
+	}
+};
+
+Player.prototype.update = function ()
+{
+	var onFloor = this.sprite.body.touching.down || this.sprite.body.blocked.down || this.locked;
 
 	var p = new Phaser.Point( 0, 0 );
 	//if ( this.keys.up.isDown || this.keys.w.isDown )
@@ -147,6 +184,40 @@ Player.prototype.update = function ()
 		this.setAnimation( 'idle', this.direction );
 	}
 	*/
+
+	if ( this.keys.space.justDown || this.keys.up.justDown )
+	{
+		if ( onFloor && Kid.game.time.now > this.jumpTimer )
+		{
+			if (this.locked)
+			{
+				this.cancelLock();
+			}
+
+			if ( this.keys.down.isDown )
+			{
+				this.willDrop = true;
+			}
+			else
+			{
+				this.willJump = true;
+			}
+		}
+	}
+
+	if (this.locked)
+	{
+		this.checkLock();
+	}
+
+	if ( ( this.keys.space.isDown || this.keys.up.isDown ) && this.sprite.body.velocity.y <= 0 )
+	{
+		this.sprite.body.gravity.y = 0;
+	}
+	else
+	{
+		this.sprite.body.gravity.y = 1500;
+	}
 };
 
 Player.prototype.render = function ()
@@ -155,4 +226,21 @@ Player.prototype.render = function ()
 	{
 		Kid.game.debug.body( this.sprite, RED );
 	}
+};
+
+Player.prototype.checkLock = function ()
+{
+	this.sprite.body.velocity.y = 0;
+
+	//  If the player has walked off either side of the platform then they're no longer locked to it
+	if ( this.sprite.body.right < this.lockedTo.body.x || this.sprite.body.x > this.lockedTo.body.right )
+	{
+		this.cancelLock();
+	}
+};
+
+Player.prototype.cancelLock = function ()
+{
+	this.wasLocked = true;
+	this.locked = false;
 };

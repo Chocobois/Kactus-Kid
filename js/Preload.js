@@ -20,8 +20,10 @@ Kid.Preload.prototype = {
 		//this.load.spritesheet( 'name', 'assets/sprites/name.png', 32, 32 );
 		this.load.image( 'cactus', 'assets/sprites/cactus.png' );
 		this.load.image( 'balloon', 'assets/sprites/balloon.png' );
+		this.load.image( 'balloons', 'assets/sprites/cute-balloons.png' );
 
 		this.load.image( 'wall', 'assets/sprites/wall.png' );
+		this.load.image( 'cloud', 'assets/sprites/cloud-platform.png' );
 
 
 		/* Audio */
@@ -44,7 +46,6 @@ Kid.Preload.prototype = {
 
 	},
 	create: function () {
-		//this.state.start( 'MainMenu', Phaser.Plugin.StateTransition.Out.ScaleUp );
-		this.state.start( 'MainMenu' );
+		this.state.start( 'MainMenu', Phaser.Plugin.StateTransition.Out.ScaleUp );
 	}
 };
