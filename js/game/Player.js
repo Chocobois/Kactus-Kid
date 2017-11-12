@@ -15,7 +15,7 @@ Player.prototype.create = function ( group, x, y )
 	this.sprite.anchor.set( 0.5 );
 	this.sprite.scale.set( 1 );
 	this.sprite.texture.baseTexture.scaleMode = PIXI.scaleModes.NEAREST;
-	this.sprite.body.setSize( 40, 81, 4, 15 );
+	this.sprite.body.setSize( 40, 78, 4, 15 );
 
 	this.setupAnimation();
 

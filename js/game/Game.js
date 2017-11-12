@@ -21,6 +21,7 @@ Kid.Game.prototype.create = function ()
 	this.sky.body.allowGravity = false;
 	this.sky.body.immovable = true;
 	this.sky.scale.set( SCREEN_WIDTH / 320 );
+	this.sky.fixedToCamera = true;
 
 	this.Stage = new Stage();
 	this.Stage.create();
@@ -60,8 +61,6 @@ Kid.Game.prototype.preRender = function ()
 Kid.Game.prototype.update = function ()
 {
 	this.handleCollisions();
-
-	this.sky.y = Kid.game.camera.y;
 
 	this.Player.update();
 
