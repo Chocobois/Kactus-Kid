@@ -32,7 +32,7 @@ Kid.Game.prototype.create = function ()
 	this.Player.create(
 		this.playerGroup,
 		7 * 64,
-		30 * 64
+		60 * 64
 	);
 
 	this.camera.follow( this.Player.sprite );
