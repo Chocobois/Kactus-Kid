@@ -3,17 +3,19 @@ function Player ()
 {
 }
 
-Player.prototype.create = function ( x, y )
+Player.prototype.create = function ( group, x, y )
 {
 	this.speed = 350;
+	this.climbSpeed = 140;
 
-	//this.sprite = group.create( x, y, 'cactus', 0 );
-	this.sprite = Kid.game.add.sprite( x, y, 'mario', 0 );
+	this.sprite = group.create( x, y, 'kid', 0 );
+
 	this.sprite.owner = this;
 	Kid.game.physics.arcade.enable( this.sprite, Phaser.Physics.ARCADE );
 	this.sprite.anchor.set( 0.5 );
-	this.sprite.scale.set( 3 );
+	this.sprite.scale.set( 1 );
 	this.sprite.texture.baseTexture.scaleMode = PIXI.scaleModes.NEAREST;
+	this.sprite.body.setSize( 40, 81, 4, 15 );
 
 	this.setupAnimation();
 
@@ -22,6 +24,9 @@ Player.prototype.create = function ( x, y )
 	this.wasLocked = false;
 	this.willJump = false;
 	this.willDrop = false;
+	this.willClimb = false;
+	this.isClimbing = false;
+	this.prevVel = new Phaser.Point(0,0);
 
 	this.keys = Kid.game.input.keyboard.createCursorKeys();
 	this.keys.w = Kid.game.input.keyboard.addKey( Phaser.Keyboard.W );
@@ -31,15 +36,18 @@ Player.prototype.create = function ( x, y )
 
 	this.keys.space = Kid.game.input.keyboard.addKey( Phaser.Keyboard.SPACEBAR );
 	this.jumpTimer = 0;
+	this.step = 0;
 };
 
 Player.prototype.setupAnimation = function ()
 {
-	this.sprite.animations.add( 'duck', [0], 1, true );
-	this.sprite.animations.add( 'idle', [1], 1, true );
-	this.sprite.animations.add( 'skid', [6], 1, true );
-	this.sprite.animations.add( 'walk', [3,5,4], 12, true );
-	this.sprite.animations.add( 'jump', [6], 1, true );
+	this.animations = {};
+	this.animations['idle'] = [0,1,2];
+	this.animations['crouch'] = [3,4,5];
+	this.animations['walk'] = [6,7,8];
+	this.animations['jump'] = [9,10];
+	this.animations['skid'] = [11,12];
+	this.animations['climb'] = [11,12];
 
 	this.setAnimation( 'idle' );
 };
@@ -48,7 +56,8 @@ Player.prototype.setAnimation = function ( newState )
 {
 	if ( this.state != newState )
 	{
-		this.sprite.animations.play( newState );
+		this.state = newState;
+		this.sprite.frame = this.animations[newState][0];
 	}
 };
 
@@ -57,7 +66,7 @@ Player.prototype.preRender = function ()
 	if (this.locked || this.wasLocked)
 	{
 		this.sprite.x += this.lockedTo.deltaX;
-		this.sprite.y = this.lockedTo.y - 40;
+		this.sprite.y = this.lockedTo.y - 30;
 
 		if (this.sprite.body.velocity.x !== 0)
 		{
@@ -68,6 +77,7 @@ Player.prototype.preRender = function ()
 	if (this.willJump)
 	{
 		this.willJump = false;
+		Kid.Audio.play( 'jump' );
 
 		if (this.lockedTo && this.lockedTo.deltaY < 0 && this.wasLocked)
 		{
@@ -108,40 +118,70 @@ Player.prototype.update = function ()
 	var left = this.keys.left.isDown || this.keys.a.isDown;
 	var right = this.keys.right.isDown || this.keys.d.isDown;
 	var down = this.keys.down.isDown || this.keys.s.isDown;
-	if ( left )
+	var up = this.keys.up.isDown || this.keys.w.isDown;
+	var onlyDown = down && !left && !right;
+	if ( left )		p.x -= 1;
+	if ( right )	p.x += 1;
+	if ( up )		p.y -= 1;
+	if ( down )		p.y += 1;
+
+
+	if ( this.keys.up.justDown )
 	{
-		p.x -= 1;
+		this.willClimb = true;
 	}
-	if ( right )
+	else
 	{
-		p.x += 1;
-	}
-	if ( down && onFloor )
-	{
-		p.x = 0;
+		this.willClimb = false;
 	}
 
-	p.setMagnitude( this.speed );
-	if ( onFloor )
+	if ( this.isClimbing )
 	{
+		p.setMagnitude( this.climbSpeed );
+		
 		this.sprite.body.velocity.x += ( p.x - this.sprite.body.velocity.x ) / 3;
+		this.sprite.body.velocity.y += ( p.y - this.sprite.body.velocity.y ) / 3;
+
+		if ( this.climbTimer < Kid.game.time.now )
+		{
+			this.stopClimbing();
+		}
 	}
-	else if ( p.getMagnitude() > 0 )
+	else
 	{
-		this.sprite.body.velocity.x += ( p.x - this.sprite.body.velocity.x ) / 20;
+		if ( down && onFloor )
+			p.x = 0;
+		p.y = 0;
+		p.setMagnitude( this.speed );
+
+		if ( onFloor )
+		{
+			var diff = ( p.x - this.sprite.body.velocity.x ) / 5;
+			diff = Math.max( Math.min( diff, this.speed / 15 ), -this.speed / 15 );
+			this.sprite.body.velocity.x += diff;
+		}
+		else if ( p.getMagnitude() > 0 )
+		{
+			this.sprite.body.velocity.x += ( p.x - this.sprite.body.velocity.x ) / 20;
+		}
 	}
 
 
-	if ( ( this.keys.space.justDown || this.keys.up.justDown ) )
+	if ( this.keys.space.justDown )
 	{
-		if ( onFloor && Kid.game.time.now > this.jumpTimer )
+		if ( ( onFloor && Kid.game.time.now > this.jumpTimer ) || this.isClimbing )
 		{
 			if (this.locked)
 			{
 				this.cancelLock();
 			}
 
-			if ( down && !left && !right )
+			if ( this.isClimbing )
+			{
+				this.stopClimbing();
+			}
+
+			if ( onlyDown )
 			{
 				this.willDrop = true;
 			}
@@ -152,12 +192,13 @@ Player.prototype.update = function ()
 		}
 	}
 
+
 	if (this.locked)
 	{
 		this.checkLock();
 	}
 
-	if ( ( this.keys.space.isDown || this.keys.up.isDown ) && this.sprite.body.velocity.y <= 0 )
+	if ( ( this.keys.space.isDown ) && this.sprite.body.velocity.y <= 0 )
 	{
 		this.sprite.body.gravity.y = 0;
 	}
@@ -167,24 +208,78 @@ Player.prototype.update = function ()
 	}
 
 
+	/* Handle animations */
+
 	var v = this.sprite.body.velocity;
-	if ( !onFloor )
+	v.y = Math.min( v.y, 1000 );
+
+	if ( this.isClimbing )
+	{
+		this.setAnimation( 'climb' );
+
+		this.step += 1;
+		var a = this.animations[this.state];
+		var f = Math.round( this.step / 10 );
+		this.sprite.frame = a[f % a.length];
+
+		if ( this.step2 == null )
+			this.step2 = 0;
+		this.step2 += v.getMagnitude() / this.climbSpeed;
+		var oldScale = this.sprite.scale.x;
+		this.sprite.scale.x = 1 - 2*(Math.round( this.step2 / 10 ) % 2);
+
+		if ( oldScale != this.sprite.scale.x )
+		{
+			Kid.Audio.play( oldScale > 0 ? 'climb1' : 'climb2' );
+		}
+	}
+	else if ( !onFloor )
 	{
 		this.setAnimation( 'jump' );
+		this.step += 1;
+		var a = this.animations[this.state];
+		var f = Math.round( this.step / 10 );
+		this.sprite.frame = a[f % a.length];
 	}
-	else if ( down && !left && !right )
+	else if ( onlyDown )
 	{
-		this.setAnimation( 'duck' );
+		this.setAnimation( 'crouch' );
+		this.step += 1;
+		var a = this.animations[this.state];
+		var f = Math.round( this.step / 10 );
+		this.sprite.frame = a[f % a.length];
 	}
 	else if ( Math.abs( v.x ) > 20 )
 	{
-		this.sprite.scale.x = v.x > 0 ? 3 : -3;
+		this.sprite.scale.x = v.x > 0 ? 1 : -1;
 		this.setAnimation( 'walk' );
+
+		if ( ( v.x > 0 && left ) || ( v.x < 0 && right ) )
+		{
+			this.setAnimation( 'skid' );
+			Kid.Audio.play('skid');
+		}
+
+		this.step += v.getMagnitude()/2 / this.speed + 1;
+		var a = this.animations[this.state];
+		var f = Math.round( this.step / 10 );
+		this.sprite.frame = a[f % a.length];
 	}
 	else
 	{
 		this.setAnimation( 'idle' );
+		this.step += 1;
+		var a = this.animations[this.state];
+		var f = Math.round( this.step / 10 );
+		this.sprite.frame = a[f % a.length];
 	}
+
+
+	if ( v.y == 0 && this.prevVel && this.prevVel.y > 0 )
+	{
+		Kid.Audio.play('land');
+	}
+	this.prevVel.copyFrom(v);
 };
 
 Player.prototype.render = function ()
@@ -210,4 +305,30 @@ Player.prototype.cancelLock = function ()
 {
 	this.wasLocked = true;
 	this.locked = false;
+};
+
+Player.prototype.onVine = function ()
+{
+	if ( this.willClimb )
+	{
+		this.startClimbing();
+	}
+	if ( this.isClimbing )
+	{
+		this.climbTimer = Kid.game.time.now + 10;
+	}
+};
+
+Player.prototype.startClimbing = function ()
+{
+	this.isClimbing = true;
+	this.sprite.body.allowGravity = false;
+	this.sprite.body.velocity.set( 0 );
+};
+
+Player.prototype.stopClimbing = function ()
+{
+	this.willClimb = false;
+	this.isClimbing = false;
+	this.sprite.body.allowGravity = true;
 };

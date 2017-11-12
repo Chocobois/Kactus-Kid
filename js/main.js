@@ -1,7 +1,7 @@
 var Kid = Kid || {};
 
-var SCREEN_WIDTH = 1000;
-var SCREEN_HEIGHT = 600;
+var SCREEN_WIDTH = 64*14;
+var SCREEN_HEIGHT = 64*10;
 Kid.game = new Phaser.Game( SCREEN_WIDTH, SCREEN_HEIGHT, Phaser.CANVAS );
 
 Kid.game.state.add( 'Boot', Kid.Boot );

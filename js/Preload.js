@@ -17,19 +17,30 @@ Kid.Preload.prototype = {
 
 		/* Sprites */
 
-		this.load.spritesheet( 'mario', 'assets/sprites/mario.png', 16, 32 );
+		this.load.image( 'walls', 'assets/rooms/walls.png' );
 
-		this.load.image( 'cactus', 'assets/sprites/cactus.png' );
-		this.load.image( 'balloon', 'assets/sprites/balloon.png' );
-		this.load.image( 'balloons', 'assets/sprites/cute-balloons.png' );
+		this.load.spritesheet( 'kid', 'assets/sprites/kid.png', 48, 96 );
 
-		this.load.image( 'wall', 'assets/sprites/wall.png' );
-		this.load.image( 'cloud', 'assets/sprites/cloud-platform.png' );
+		this.load.spritesheet( 'balloon', 'assets/sprites/balloon.png', 48, 96 );
+
+		this.load.image( 'tree_s', 'assets/sprites/tree_short.png' );
+		this.load.image( 'tree_m', 'assets/sprites/tree_medium.png' );
+		this.load.image( 'tree_l', 'assets/sprites/tree_long.png' );
+		this.load.image( 'leaves', 'assets/sprites/leaves.png' );
+
+		this.load.image( 'sky', 'assets/sprites/sky.png' );
+		this.load.spritesheet( 'cloud', 'assets/sprites/cloud.png', 120, 46 );
 
 
 		/* Audio */
 
-		//this.load.audio( 'name', 'assets/sounds/name.ogg' );
+		this.load.audio( 'music', 'assets/sounds/music.ogg' );
+		this.load.audio( 'jump', 'assets/sounds/jump.ogg' );
+		this.load.audio( 'land', 'assets/sounds/land.wav' );
+		this.load.audio( 'skid', 'assets/sounds/skid.wav' );
+		this.load.audio( 'climb1', 'assets/sounds/climb1.wav' );
+		this.load.audio( 'climb2', 'assets/sounds/climb2.wav' );
+		this.load.audio( 'pop', 'assets/sounds/pop.ogg' );
 
 
 		// Loading progress bar
@@ -47,6 +58,8 @@ Kid.Preload.prototype = {
 
 	},
 	create: function () {
+		Kid.Audio = new AudioManager();
+
 		this.state.start( 'MainMenu', Phaser.Plugin.StateTransition.Out.ScaleUp );
 	}
 };
