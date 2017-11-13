@@ -126,7 +126,7 @@ Player.prototype.update = function ()
 	if ( down )		p.y += 1;
 
 
-	if ( up )
+	if ( this.keys.up.justDown || this.keys.w.justDown )
 	{
 		this.willClimb = true;
 	}
