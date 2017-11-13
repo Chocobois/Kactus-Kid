@@ -48,10 +48,21 @@ Entity.prototype.stop = function ()
 Entity.prototype.makeVerticalCloud = function ()
 {
 	this.addMotionPath([
-		{ x: "+0", xSpeed: 2000, xEase: "Linear", y: "-100", ySpeed: 2000, yEase: "Sine.easeIn" },
-		{ x: "-0", xSpeed: 2000, xEase: "Linear", y: "-100", ySpeed: 2000, yEase: "Sine.easeOut" },
-		{ x: "-0", xSpeed: 2000, xEase: "Linear", y: "+100", ySpeed: 2000, yEase: "Sine.easeIn" },
-		{ x: "+0", xSpeed: 2000, xEase: "Linear", y: "+100", ySpeed: 2000, yEase: "Sine.easeOut" }
+		{ x: "+0", xSpeed: 2000, xEase: "Linear", y: "-96", ySpeed: 2000, yEase: "Sine.easeIn" },
+		{ x: "-0", xSpeed: 2000, xEase: "Linear", y: "-96", ySpeed: 2000, yEase: "Sine.easeOut" },
+		{ x: "-0", xSpeed: 2000, xEase: "Linear", y: "+96", ySpeed: 2000, yEase: "Sine.easeIn" },
+		{ x: "+0", xSpeed: 2000, xEase: "Linear", y: "+96", ySpeed: 2000, yEase: "Sine.easeOut" }
+	]);
+	this.start();
+};
+
+Entity.prototype.makeVerticalCloudInv = function ()
+{
+	this.addMotionPath([
+		{ x: "+0", xSpeed: 2000, xEase: "Linear", y: "+96", ySpeed: 2000, yEase: "Sine.easeIn" },
+		{ x: "-0", xSpeed: 2000, xEase: "Linear", y: "+96", ySpeed: 2000, yEase: "Sine.easeOut" },
+		{ x: "-0", xSpeed: 2000, xEase: "Linear", y: "-96", ySpeed: 2000, yEase: "Sine.easeIn" },
+		{ x: "+0", xSpeed: 2000, xEase: "Linear", y: "-96", ySpeed: 2000, yEase: "Sine.easeOut" }
 	]);
 	this.start();
 };

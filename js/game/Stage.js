@@ -58,7 +58,7 @@ Stage.prototype.addBalloon = function ( x, y )
 	balloon.makeBalloon();
 };
 
-Stage.prototype.addCloudPlatform = function ( x, y )
+Stage.prototype.addCloudPlatform = function ( x, y, inv=false )
 {
 	var cloud = new Entity( x*64, y*64, 'cloud', this.clouds );
 	cloud.sprite.scale.set( 2 );
@@ -66,7 +66,10 @@ Stage.prototype.addCloudPlatform = function ( x, y )
 	cloud.sprite.animations.play( 'anim' );
 	cloud.sprite.texture.baseTexture.scaleMode = PIXI.scaleModes.NEAREST;
 	cloud.sprite.body.setSize( 100, 10, 10, 8 );
-	cloud.makeVerticalCloud();
+	if (inv)
+		cloud.makeVerticalCloudInv();
+	else
+		cloud.makeVerticalCloud();
 
 	cloud.sprite.body.customSeparateX = true;
 	cloud.sprite.body.customSeparateY = true;
@@ -148,7 +151,11 @@ Stage.prototype.addObject = function ( key, x, y )
 	}
 	else if ( key == '0,255,255' )
 	{
-		this.addCloudPlatform( x, y );
+		this.addCloudPlatform( x, y, false );
+	}
+	else if ( key == '0,255,128' )
+	{
+		this.addCloudPlatform( x, y, true );
 	}
 	else if ( key == '0,255,0' )
 	{
